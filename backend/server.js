@@ -10,6 +10,10 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' })); // Parse JSON bodies with higher limit for base64 images
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Health check & root
+app.get('/', (req, res) => res.json({ status: 'AI Virtual Mouse Backend is running!' }));
+app.get('/health', (req, res) => res.json({ status: 'ok' }));
+
 // API Routes
 app.use('/api/auth', authRoutes);
 
