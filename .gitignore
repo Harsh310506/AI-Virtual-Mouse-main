@@ -3,6 +3,7 @@ dist/
 build/
 .env
 .DS_Store
+users.json
 
 # Python
 venv/
