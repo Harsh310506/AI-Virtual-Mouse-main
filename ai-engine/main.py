@@ -42,8 +42,8 @@ hands = mp_hands.Hands(
 )
 mp_drawing = mp.solutions.drawing_utils
 
-# Initialize Socket.io client
-sio = socketio.Client()
+# Initialize Socket.io client with auto-reconnect
+sio = socketio.Client(reconnection=True, reconnection_attempts=0, reconnection_delay=2, reconnection_delay_max=10)
 
 @sio.event
 def connect():
@@ -51,7 +51,7 @@ def connect():
 
 @sio.event
 def disconnect():
-    print("Disconnected from backend.")
+    print("Disconnected from backend. Will auto-reconnect...")
 
 @sio.event
 def new_gesture_rules(data):
@@ -70,13 +70,20 @@ def get_distance(p1, p2, img_w, img_h):
     x2, y2 = int(p2.x * img_w), int(p2.y * img_h)
     return math.hypot(x2 - x1, y2 - y1)
 
+def connect_with_retry():
+    """Keep trying to connect until successful — handles Render cold starts."""
+    while True:
+        try:
+            print(f"Connecting to backend at {BACKEND_URL}...")
+            sio.connect(BACKEND_URL, wait_timeout=15)
+            return True
+        except Exception as e:
+            print(f"Connection failed: {e}")
+            print("Render may be waking up (cold start). Retrying in 5 seconds...")
+            time.sleep(5)
+
 def main():
-    try:
-        print(f"Connecting to backend at {BACKEND_URL}...")
-        sio.connect(BACKEND_URL)
-    except Exception as e:
-        print(f"Failed to connect to backend: {e}")
-        return
+    connect_with_retry()
 
     # Initialize Webcam with DirectShow for instant startup on Windows
     cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
